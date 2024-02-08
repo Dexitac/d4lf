@@ -1,9 +1,11 @@
 import json
 import os
+import sys
 import threading
-from logger import Logger
+
 from config import Config
 from item.data.item_type import ItemType
+from logger import Logger
 
 dataloader_lock = threading.Lock()
 
@@ -33,60 +35,52 @@ class Dataloader:
     def load_data(self):
         if "language" not in Config().general:
             Logger.error("Could not load assets. Config not initalized!")
-            os._exit(-1)
+            sys.exit(-1)
 
-        with open(f"assets/lang/{Config().general['language']}/affixes.json", "r", encoding="utf-8") as f:
-            self.affix_dict: dict = json.load(f)
+        language = Config().general['language']
+        lang_path = f"assets/lang/{language}"
 
-        with open(f"assets/lang/{Config().general['language']}/sigils.json", "r", encoding="utf-8") as f:
-            affix_sigil_dict_all = json.load(f)
-            self.affix_sigil_dict = {
-                **affix_sigil_dict_all["dungeons"],
-                **affix_sigil_dict_all["minor"],
-                **affix_sigil_dict_all["major"],
-                **affix_sigil_dict_all["positive"],
-            }
+        def load_json_file(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.load(f)
 
-        with open(f"assets/lang/{Config().general['language']}/corrections.json", "r", encoding="utf-8") as f:
-            data = json.load(f)
-            self.error_map = data["error_map"]
-            self.filter_after_keyword = data["filter_after_keyword"]
-            self.filter_words = data["filter_words"]
+        self.affix_dict: dict = self.load_json_file(os.path.join(lang_path, "affixes.json"))
 
-        with open(f"assets/lang/{Config().general['language']}/aspects.json", "r") as f:
-            data = json.load(f)
-            for key, d in data.items():
-                # Note: If you adjust the :45, also adjust it in find_aspect.py
-                self.aspect_dict[key] = d["desc"][:45]
-                self.aspect_num_idx[key] = d["num_idx"]
+        affix_sigil_dict_all = self.load_json_file(os.path.join(lang_path, "sigils.json"))
+        self.affix_sigil_dict = {
+            **affix_sigil_dict_all["dungeons"],
+            **affix_sigil_dict_all["minor"],
+            **affix_sigil_dict_all["major"],
+            **affix_sigil_dict_all["positive"],
+        }
 
-        with open(f"assets/lang/{Config().general['language']}/uniques.json", "r") as f:
-            data = json.load(f)
-            for key, d in data.items():
-                # Note: If you adjust the :45, also adjust it in find_aspect.py
-                self.aspect_unique_dict[key] = d["desc"][:45]
-                self.aspect_unique_num_idx[key] = d["num_idx"]
+        data = self.load_json_file(os.path.join(lang_path, "corrections.json"))
+        self.error_map = data["error_map"]
+        self.filter_after_keyword = data["filter_after_keyword"]
+        self.filter_words = data["filter_words"]
 
-        with open(f"assets/lang/{Config().general['language']}/affixes.json", "r", encoding="utf-8") as f:
-            self.affix_dict: dict = json.load(f)
+        data = self.load_json_file(os.path.join(lang_path, "aspects.json"))
+        for key, d in data.items():
+            # Note: If you adjust the :45, also adjust it in find_aspect.py
+            self.aspect_dict[key] = d["desc"][:45]
+            self.aspect_num_idx[key] = d["num_idx"]
 
-        with open(f"assets/lang/{Config().general['language']}/sigils.json", "r", encoding="utf-8") as f:
-            affix_sigil_dict_all = json.load(f)
-            self.affix_sigil_dict = {
-                **affix_sigil_dict_all["dungeons"],
-                **affix_sigil_dict_all["minor"],
-                **affix_sigil_dict_all["major"],
-                **affix_sigil_dict_all["positive"],
-            }
+        data = self.load_json_file(os.path.join(lang_path, "uniques.json"))
+        for key, d in data.items():
+            # Note: If you adjust the :45, also adjust it in find_aspect.py
+            self.aspect_unique_dict[key] = d["desc"][:45]
+            self.aspect_unique_num_idx[key] = d["num_idx"]
 
-        with open(f"assets/lang/{Config().general['language']}/item_types.json", "r", encoding="utf-8") as f:
-            data = json.load(f)
-            for item, value in data.items():
-                if item in ItemType.__members__:
-                    enum_member = ItemType[item]
-                    enum_member._value_ = value
-                else:
-                    Logger.warning(f"{item} type not in item_type.py")
+        data = self.load_json_file(os.path.join(lang_path, "item_types.json"))
+        for item, value in data.items():
+            if item in ItemType.__members__:
+                enum_member = ItemType[item]
+                enum_member._value_ = value
+            else:
+                Logger.warning(f"{item} type not in item_type.py")
 
-        with open(f"assets/lang/{Config().general['language']}/tooltips.json", "r", encoding="utf-8") as f:
-            self.tooltips = json.load(f)
+        self.tooltips = self.load_json_file(os.path.join(lang_path, "tooltips.json"))
+
+    def load_json_file(self, file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f)
