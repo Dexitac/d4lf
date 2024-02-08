@@ -61,14 +61,12 @@ class Dataloader:
 
         data = self.load_json_file(os.path.join(lang_path, "aspects.json"))
         for key, d in data.items():
-            # Note: If you adjust the :45, also adjust it in find_aspect.py
-            self.aspect_dict[key] = d["desc"][:45]
+            self.aspect_dict[key] = d["desc"][:MAX_DESC_LENGTH]
             self.aspect_num_idx[key] = d["num_idx"]
 
         data = self.load_json_file(os.path.join(lang_path, "uniques.json"))
         for key, d in data.items():
-            # Note: If you adjust the :45, also adjust it in find_aspect.py
-            self.aspect_unique_dict[key] = d["desc"][:45]
+            self.aspect_unique_dict[key] = d["desc"][:MAX_DESC_LENGTH]
             self.aspect_unique_num_idx[key] = d["num_idx"]
 
         data = self.load_json_file(os.path.join(lang_path, "item_types.json"))
@@ -84,3 +82,6 @@ class Dataloader:
     def load_json_file(self, file_path):
         with open(file_path, "r", encoding="utf-8") as f:
             return json.load(f)
+
+
+MAX_DESC_LENGTH = 45
